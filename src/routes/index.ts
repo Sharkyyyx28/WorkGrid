@@ -1,6 +1,8 @@
 import { Router, Request, Response } from 'express';
 import { authRoutes } from './auth.routes';
 import { userRoutes } from './user.routes';
+import { AuthMiddleware } from '../middlewares/auth.middleware';
+import { TenantMiddleware } from '../middlewares/tenant.middleware';
 
 const router = Router();
 
@@ -14,8 +16,13 @@ router.get('/health', (req: Request, res: Response) => {
   });
 });
 
-// API Routes
+// Public API Routes
 router.use('/auth', authRoutes);
+
+// Protected API Routes (Strict Tenant Isolation)
+router.use(AuthMiddleware.authenticate);
+router.use(TenantMiddleware.enforceTenancy);
+
 router.use('/users', userRoutes);
 
 export const apiRoutes = router;

@@ -18,19 +18,25 @@ export class UserService {
     return this.repo.create(data);
   }
 
-  public async getUserById(id: string): Promise<User> {
-    const user = await this.repo.findById(id);
+  public async getUserById(id: string, organizationId?: string): Promise<User> {
+    const user = await this.repo.findById(id, organizationId);
     if (!user) {
-      throw new AppError('User not found', 404);
+      throw new AppError('User not found or access denied', 404);
     }
     return user;
   }
 
-  public async getUsers(page = 1, limit = 10): Promise<PaginatedResponse<User>> {
+  public async getUsers(
+    page = 1,
+    limit = 10,
+    organizationId?: string
+  ): Promise<PaginatedResponse<User>> {
     const skip = (page - 1) * limit;
+    const where = organizationId ? { organizationId } : undefined;
+
     const [users, total] = await Promise.all([
-      this.repo.findAll({ skip, take: limit, orderBy: { createdAt: 'desc' } }),
-      this.repo.count(),
+      this.repo.findAll({ skip, take: limit, where, orderBy: { createdAt: 'desc' } }),
+      this.repo.count(where),
     ]);
 
     return {
@@ -44,14 +50,18 @@ export class UserService {
     };
   }
 
-  public async updateUser(id: string, data: Prisma.UserUpdateInput): Promise<User> {
-    await this.getUserById(id); // verify existence
-    return this.repo.update(id, data);
+  public async updateUser(
+    id: string,
+    data: Prisma.UserUpdateInput,
+    organizationId?: string
+  ): Promise<User> {
+    await this.getUserById(id, organizationId); // verify existence within tenant
+    return this.repo.update(id, data, organizationId);
   }
 
-  public async deleteUser(id: string): Promise<User> {
-    await this.getUserById(id); // verify existence
-    return this.repo.delete(id);
+  public async deleteUser(id: string, organizationId?: string): Promise<User> {
+    await this.getUserById(id, organizationId); // verify existence within tenant
+    return this.repo.delete(id, organizationId);
   }
 }
 

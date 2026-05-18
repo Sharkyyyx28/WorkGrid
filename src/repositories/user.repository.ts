@@ -6,12 +6,22 @@ export class UserRepository {
     return prisma.user.create({ data });
   }
 
-  public async findById(id: string): Promise<User | null> {
-    return prisma.user.findUnique({ where: { id } });
+  public async findById(id: string, organizationId?: string): Promise<User | null> {
+    return prisma.user.findFirst({
+      where: {
+        id,
+        ...(organizationId && { organizationId }),
+      },
+    });
   }
 
-  public async findByEmail(email: string): Promise<User | null> {
-    return prisma.user.findUnique({ where: { email } });
+  public async findByEmail(email: string, organizationId?: string): Promise<User | null> {
+    return prisma.user.findFirst({
+      where: {
+        email,
+        ...(organizationId && { organizationId }),
+      },
+    });
   }
 
   public async findAll(params: {
@@ -28,11 +38,28 @@ export class UserRepository {
     return prisma.user.count({ where });
   }
 
-  public async update(id: string, data: Prisma.UserUpdateInput): Promise<User> {
+  public async update(
+    id: string,
+    data: Prisma.UserUpdateInput,
+    organizationId?: string
+  ): Promise<User> {
+    // If organizationId is provided, verify existence within tenant before updating
+    if (organizationId) {
+      const user = await this.findById(id, organizationId);
+      if (!user) {
+        throw new Error('User not found or does not belong to this tenant');
+      }
+    }
     return prisma.user.update({ where: { id }, data });
   }
 
-  public async delete(id: string): Promise<User> {
+  public async delete(id: string, organizationId?: string): Promise<User> {
+    if (organizationId) {
+      const user = await this.findById(id, organizationId);
+      if (!user) {
+        throw new Error('User not found or does not belong to this tenant');
+      }
+    }
     return prisma.user.delete({ where: { id } });
   }
 }

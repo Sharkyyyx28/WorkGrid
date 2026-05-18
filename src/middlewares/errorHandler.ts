@@ -8,7 +8,6 @@ export const errorHandler = (
   err: Error | AppError | ZodError,
   req: Request,
   res: Response,
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   next: NextFunction
 ): void => {
   let statusCode = 500;
@@ -18,7 +17,7 @@ export const errorHandler = (
   if (err instanceof ZodError) {
     statusCode = 400;
     message = 'Validation failed';
-    errors = err.errors.map((e) => ({
+    errors = err.issues.map((e) => ({
       field: e.path.join('.'),
       message: e.message,
     }));
@@ -26,7 +25,6 @@ export const errorHandler = (
     statusCode = err.statusCode;
     message = err.message;
   } else if (err.name === 'PrismaClientKnownRequestError') {
-    // Handle known Prisma ORM errors (e.g., unique constraint violations)
     statusCode = 400;
     message = 'Database operation failed due to known constraint violation';
   } else if (err.name === 'PrismaClientValidationError') {
