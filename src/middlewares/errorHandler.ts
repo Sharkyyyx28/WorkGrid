@@ -1,10 +1,11 @@
 import { Request, Response, NextFunction } from 'express';
+import { ZodError } from 'zod';
 import { AppError } from '../utils/AppError';
 import { config } from '../config/env';
 
 // Global Error Handler Middleware
 export const errorHandler = (
-  err: Error | AppError,
+  err: Error | AppError | ZodError,
   req: Request,
   res: Response,
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
@@ -14,7 +15,14 @@ export const errorHandler = (
   let message = 'Internal Server Error';
   let errors: any = undefined;
 
-  if (err instanceof AppError) {
+  if (err instanceof ZodError) {
+    statusCode = 400;
+    message = 'Validation failed';
+    errors = err.errors.map((e) => ({
+      field: e.path.join('.'),
+      message: e.message,
+    }));
+  } else if (err instanceof AppError) {
     statusCode = err.statusCode;
     message = err.message;
   } else if (err.name === 'PrismaClientKnownRequestError') {
@@ -43,8 +51,8 @@ export const errorHandler = (
     error: {
       code: statusCode,
       message,
-      ...(config.nodeEnv === 'development' && { stack: err.stack }),
       ...(errors && { details: errors }),
+      ...(config.nodeEnv === 'development' && { stack: err.stack }),
     },
   });
 };
