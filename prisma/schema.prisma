@@ -7,12 +7,105 @@ generator client {
   provider = "prisma-client-js"
 }
 
-model User {
-  id        String   @id @default(uuid())
-  email     String   @unique
-  name      String?
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+enum Role {
+  OWNER
+  ADMIN
+  MEMBER
+}
 
+enum ProjectStatus {
+  PLANNING
+  ACTIVE
+  ON_HOLD
+  COMPLETED
+  ARCHIVED
+}
+
+enum TaskStatus {
+  TODO
+  IN_PROGRESS
+  IN_REVIEW
+  COMPLETED
+  CANCELLED
+}
+
+enum TaskPriority {
+  LOW
+  MEDIUM
+  HIGH
+  URGENT
+}
+
+model Organization {
+  id        String    @id @default(uuid())
+  name      String
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+
+  users     User[]
+  projects  Project[]
+  tasks     Task[]
+
+  @@map("organizations")
+}
+
+model User {
+  id             String       @id @default(uuid())
+  name           String
+  email          String       @unique
+  password       String
+  role           Role         @default(MEMBER)
+  organizationId String
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  createdProjects Project[]   @relation("ProjectCreator")
+  assignedTasks   Task[]      @relation("TaskAssignee")
+
+  @@index([organizationId])
   @@map("users")
+}
+
+model Project {
+  id             String        @id @default(uuid())
+  name           String
+  description    String?
+  status         ProjectStatus @default(PLANNING)
+  organizationId String
+  createdBy      String?
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
+
+  organization   Organization  @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  creator        User?         @relation("ProjectCreator", fields: [createdBy], references: [id], onDelete: SetNull)
+  tasks          Task[]
+
+  @@index([organizationId])
+  @@index([createdBy])
+  @@map("projects")
+}
+
+model Task {
+  id             String       @id @default(uuid())
+  title          String
+  description    String?
+  priority       TaskPriority @default(MEDIUM)
+  status         TaskStatus   @default(TODO)
+  dueDate        DateTime?
+  projectId      String
+  assignedTo     String?
+  organizationId String
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  project        Project      @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  assignee       User?        @relation("TaskAssignee", fields: [assignedTo], references: [id], onDelete: SetNull)
+
+  @@index([organizationId])
+  @@index([projectId])
+  @@index([assignedTo])
+  @@index([id])
+  @@map("tasks")
 }
