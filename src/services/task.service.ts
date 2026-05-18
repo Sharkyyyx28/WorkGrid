@@ -4,6 +4,7 @@ import { projectService, ProjectService } from './project.service';
 import { userService, UserService } from './user.service';
 import { AppError } from '../utils/AppError';
 import { PaginatedResponse } from '../types';
+import { PaginationUtil } from '../utils/pagination';
 
 export class TaskService {
   private repo: TaskRepository;
@@ -51,6 +52,7 @@ export class TaskService {
     query: {
       page?: number;
       limit?: number;
+      cursor?: string;
       status?: any;
       priority?: any;
       projectId?: string;
@@ -59,10 +61,6 @@ export class TaskService {
       sortOrder?: 'asc' | 'desc';
     }
   ): Promise<PaginatedResponse<Partial<Task>>> {
-    const page = query.page || 1;
-    const limit = query.limit || 10;
-    const skip = (page - 1) * limit;
-
     // Build tenant-isolated and filtered where clause
     const where: Prisma.TaskWhereInput = {
       organizationId,
@@ -72,25 +70,14 @@ export class TaskService {
       ...(query.assignedTo && { assignedTo: query.assignedTo }),
     };
 
-    // Build dynamic sorting
-    const orderBy: Prisma.TaskOrderByWithRelationInput = {
-      [query.sortBy || 'createdAt']: query.sortOrder || 'desc',
-    };
+    const prismaParams = PaginationUtil.getPrismaParams(query, 'createdAt');
 
     const [tasks, total] = await Promise.all([
-      this.repo.findAll({ skip, take: limit, where, orderBy }),
+      this.repo.findAll({ ...prismaParams, where }),
       this.repo.count(where),
     ]);
 
-    return {
-      data: tasks,
-      meta: {
-        total,
-        page,
-        limit,
-        totalPages: Math.ceil(total / limit),
-      },
-    };
+    return PaginationUtil.formatResponse(tasks, total, query);
   }
 
   public async updateTask(

@@ -19,7 +19,8 @@ export class AuthValidator {
   });
 
   public static validate =
-    (schema: z.ZodTypeAny) => (req: Request, res: Response, next: NextFunction): void => {
+    (schema: z.ZodTypeAny) =>
+    (req: Request, res: Response, next: NextFunction): void => {
       try {
         schema.parse({
           body: req.body,

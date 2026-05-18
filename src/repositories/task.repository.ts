@@ -37,13 +37,15 @@ export class TaskRepository {
   public async findAll(params: {
     skip?: number;
     take?: number;
+    cursor?: Prisma.TaskWhereUniqueInput;
     where: Prisma.TaskWhereInput;
-    orderBy?: Prisma.TaskOrderByWithRelationInput;
+    orderBy?: any;
   }): Promise<Partial<Task>[]> {
-    const { skip, take, where, orderBy } = params;
+    const { skip, take, cursor, where, orderBy } = params;
     return prisma.task.findMany({
       skip,
       take,
+      cursor,
       where,
       orderBy,
       select: taskSelect,

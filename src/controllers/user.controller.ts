@@ -22,11 +22,9 @@ export class UserController {
   });
 
   public getUsers = asyncHandler(async (req: CustomRequest, res: Response): Promise<void> => {
-    const page = req.query.page ? parseInt(req.query.page as string, 10) : 1;
-    const limit = req.query.limit ? parseInt(req.query.limit as string, 10) : 10;
     const organizationId = req.tenant!.organizationId;
 
-    const result = await this.service.getUsers(page, limit, organizationId);
+    const result = await this.service.getUsers(req.query, organizationId);
     res.status(200).json({
       success: true,
       ...result,

@@ -5,7 +5,7 @@ export class OrganizationRepository {
   public async createWithOwner(
     orgData: Prisma.OrganizationCreateWithoutUsersInput,
     userData: Prisma.UserCreateWithoutOrganizationInput
-  ): Promise<{ organization: Organization; user: User }> {
+  ): Promise<{ organization: any; user: any }> {
     const organization = await prisma.organization.create({
       data: {
         ...orgData,
@@ -13,8 +13,22 @@ export class OrganizationRepository {
           create: userData,
         },
       },
-      include: {
-        users: true,
+      select: {
+        id: true,
+        name: true,
+        createdAt: true,
+        updatedAt: true,
+        users: {
+          select: {
+            id: true,
+            name: true,
+            email: true,
+            role: true,
+            organizationId: true,
+            createdAt: true,
+            updatedAt: true,
+          },
+        },
       },
     });
 

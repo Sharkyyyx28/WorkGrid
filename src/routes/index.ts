@@ -18,10 +18,8 @@ router.get('/health', (req: Request, res: Response) => {
   });
 });
 
-// Public API Routes
 router.use('/auth', authRoutes);
 
-// Protected API Routes (Strict Tenant Isolation)
 router.use(AuthMiddleware.authenticate);
 router.use(TenantMiddleware.enforceTenancy);
 

@@ -22,5 +22,7 @@ export interface PaginatedResponse<T> {
     page: number;
     limit: number;
     totalPages: number;
+    hasNextPage?: boolean;
+    nextCursor?: string | null;
   };
 }

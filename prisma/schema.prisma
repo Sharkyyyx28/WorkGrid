@@ -46,6 +46,7 @@ model Organization {
   projects  Project[]
   tasks     Task[]
 
+  @@index([createdAt])
   @@map("organizations")
 }
 
@@ -63,7 +64,8 @@ model User {
   createdProjects Project[]   @relation("ProjectCreator")
   assignedTasks   Task[]      @relation("TaskAssignee")
 
-  @@index([organizationId])
+  @@index([organizationId, createdAt])
+  @@index([organizationId, email])
   @@map("users")
 }
 
@@ -81,7 +83,9 @@ model Project {
   creator        User?         @relation("ProjectCreator", fields: [createdBy], references: [id], onDelete: SetNull)
   tasks          Task[]
 
-  @@index([organizationId])
+  @@index([organizationId, status])
+  @@index([organizationId, createdAt])
+  @@index([organizationId, name])
   @@index([createdBy])
   @@map("projects")
 }
@@ -103,9 +107,13 @@ model Task {
   project        Project      @relation(fields: [projectId], references: [id], onDelete: Cascade)
   assignee       User?        @relation("TaskAssignee", fields: [assignedTo], references: [id], onDelete: SetNull)
 
-  @@index([organizationId])
-  @@index([projectId])
-  @@index([assignedTo])
+  @@index([organizationId, status])
+  @@index([organizationId, priority])
+  @@index([organizationId, projectId])
+  @@index([organizationId, assignedTo])
+  @@index([organizationId, dueDate])
+  @@index([organizationId, createdAt])
+  @@index([projectId, status])
   @@index([id])
   @@map("tasks")
 }

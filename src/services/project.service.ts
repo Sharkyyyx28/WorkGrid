@@ -2,6 +2,7 @@ import { Prisma, Project } from '@prisma/client';
 import { projectRepository, ProjectRepository } from '../repositories/project.repository';
 import { AppError } from '../utils/AppError';
 import { PaginatedResponse } from '../types';
+import { PaginationUtil } from '../utils/pagination';
 
 export class ProjectService {
   private repo: ProjectRepository;
@@ -22,21 +23,26 @@ export class ProjectService {
     return project;
   }
 
+  public async getProjectFullData(id: string, organizationId: string): Promise<any> {
+    const project = await this.repo.findFullDataById(id, organizationId);
+    if (!project) {
+      throw new AppError('Project not found or access denied', 404);
+    }
+    return project;
+  }
+
   public async getProjects(
     organizationId: string,
     query: {
       page?: number;
       limit?: number;
+      cursor?: string;
       status?: any;
       search?: string;
       sortBy?: string;
       sortOrder?: 'asc' | 'desc';
     }
   ): Promise<PaginatedResponse<Partial<Project>>> {
-    const page = query.page || 1;
-    const limit = query.limit || 10;
-    const skip = (page - 1) * limit;
-
     // Build tenant-isolated and filtered where clause
     const where: Prisma.ProjectWhereInput = {
       organizationId,
@@ -49,25 +55,14 @@ export class ProjectService {
       }),
     };
 
-    // Build dynamic sorting
-    const orderBy: Prisma.ProjectOrderByWithRelationInput = {
-      [query.sortBy || 'createdAt']: query.sortOrder || 'desc',
-    };
+    const prismaParams = PaginationUtil.getPrismaParams(query, 'createdAt');
 
     const [projects, total] = await Promise.all([
-      this.repo.findAll({ skip, take: limit, where, orderBy }),
+      this.repo.findAll({ ...prismaParams, where }),
       this.repo.count(where),
     ]);
 
-    return {
-      data: projects,
-      meta: {
-        total,
-        page,
-        limit,
-        totalPages: Math.ceil(total / limit),
-      },
-    };
+    return PaginationUtil.formatResponse(projects, total, query);
   }
 
   public async updateProject(

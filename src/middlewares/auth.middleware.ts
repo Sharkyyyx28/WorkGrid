@@ -5,11 +5,7 @@ import { AppError } from '../utils/AppError';
 import { CustomRequest } from '../types';
 
 export class AuthMiddleware {
-  public static authenticate = (
-    req: CustomRequest,
-    res: Response,
-    next: NextFunction
-  ): void => {
+  public static authenticate = (req: CustomRequest, res: Response, next: NextFunction): void => {
     let token: string | undefined;
 
     if (req.headers.authorization && req.headers.authorization.startsWith('Bearer ')) {
@@ -30,15 +26,14 @@ export class AuthMiddleware {
   };
 
   public static requireRole =
-    (roles: Role[]) => (req: CustomRequest, res: Response, next: NextFunction): void => {
+    (roles: Role[]) =>
+    (req: CustomRequest, res: Response, next: NextFunction): void => {
       if (!req.user) {
         return next(new AppError('Authentication required to perform this action.', 401));
       }
 
       if (!roles.includes(req.user.role)) {
-        return next(
-          new AppError('You do not have permission to perform this action.', 403)
-        );
+        return next(new AppError('You do not have permission to perform this action.', 403));
       }
 
       next();

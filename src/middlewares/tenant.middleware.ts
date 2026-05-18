@@ -3,11 +3,7 @@ import { CustomRequest } from '../types';
 import { AppError } from '../utils/AppError';
 
 export class TenantMiddleware {
-  public static enforceTenancy = (
-    req: CustomRequest,
-    res: Response,
-    next: NextFunction
-  ): void => {
+  public static enforceTenancy = (req: CustomRequest, res: Response, next: NextFunction): void => {
     // 1. Ensure user authentication context exists
     if (!req.user) {
       return next(new AppError('Authentication required to identify tenant context.', 401));

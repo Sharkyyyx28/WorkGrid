@@ -43,6 +43,17 @@ export class ProjectController {
     });
   });
 
+  public getProjectFullData = asyncHandler(
+    async (req: CustomRequest, res: Response): Promise<void> => {
+      const organizationId = req.tenant!.organizationId;
+      const projectFullData = await this.service.getProjectFullData(req.params.id, organizationId);
+      res.status(200).json({
+        success: true,
+        data: projectFullData,
+      });
+    }
+  );
+
   public updateProject = asyncHandler(async (req: CustomRequest, res: Response): Promise<void> => {
     const organizationId = req.tenant!.organizationId;
     const project = await this.service.updateProject(req.params.id, organizationId, req.body);
